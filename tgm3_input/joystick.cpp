@@ -20,6 +20,9 @@ void joystick::init(const config &cfg)
 	buttons_1p = 0;
 	buttons_2p = 0;
 
+	old_dir_buttons_1p = 0;
+	old_dir_buttons_2p = 0;
+
 	// Get required buffer size
 	unsigned int num_devices;
 	GetRawInputDeviceList(nullptr, &num_devices, sizeof(RAWINPUTDEVICELIST));
@@ -235,6 +238,7 @@ void joystick::update(const tagRAWINPUT *input)
 		return;
 
 	auto *buttons = device->player == 1 ? &buttons_1p : &buttons_2p;
+	auto *old_dir_buttons = device->player == 1 ? &old_dir_buttons_1p : &old_dir_buttons_2p;
 
 	// Completely reset buttons
 	*buttons = 0;
@@ -284,14 +288,12 @@ void joystick::update(const tagRAWINPUT *input)
 		if (val_cap.Range.UsageMin == 0x39) { // Hat switch
 			value -= val_cap.LogicalMin;
 
-			if (value == 0)
-				*buttons |= mask_up;
-			else if (value == 2)
-				*buttons |= mask_right;
-			else if (value == 4)
-				*buttons |= mask_down;
-			else if (value == 6)
-				*buttons |= mask_left;
+			*buttons |=
+				value == 0 ? mask_up :
+				value == 2 ? mask_right :
+				value == 4 ? mask_down :
+				value == 6 ? mask_left :
+				             0;
 		} else {
 			// Cast to signed and rescale to [-1.0, 1.0]
 			auto position = (float)((signed)(value));
@@ -313,9 +315,9 @@ void joystick::update(const tagRAWINPUT *input)
 	const auto dir_buttons = *buttons & (mask_up | mask_down | mask_left | mask_right);
 	*buttons &= ~dir_buttons;
 
-	const auto changed = dir_buttons ^ old_dir_buttons;
+	const auto changed = dir_buttons ^ *old_dir_buttons;
 	const auto pressed = changed & dir_buttons;
-	const auto released = changed & old_dir_buttons;
+	const auto released = changed & *old_dir_buttons;
 
 	for (auto i = 0; i < std::numeric_limits<decltype(dir_buttons)>::digits; i++) {
 		const auto mask = 1 << i;
@@ -328,7 +330,7 @@ void joystick::update(const tagRAWINPUT *input)
 	if (direction_keys.size() != 0)
 		*buttons |= direction_keys.front();
 
-	old_dir_buttons = dir_buttons;
+	*old_dir_buttons = dir_buttons;
 
 	HidD_FreePreparsedData(dev_info);
 }

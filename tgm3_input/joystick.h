@@ -15,7 +15,8 @@ class joystick : public base_input {
 	unsigned short buttons_2p;
 
 	// Directional buttons from the previous update
-	unsigned short old_dir_buttons;
+	unsigned short old_dir_buttons_1p;
+	unsigned short old_dir_buttons_2p;
 
 	// List containing which direction keys are pressed
 	std::list<unsigned short> direction_keys;
