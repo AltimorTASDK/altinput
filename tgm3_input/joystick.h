@@ -19,7 +19,8 @@ class joystick : public base_input {
 	unsigned short old_dir_buttons_2p;
 
 	// List containing which direction keys are pressed
-	std::list<unsigned short> direction_keys;
+	std::list<unsigned short> direction_keys_1p;
+	std::list<unsigned short> direction_keys_2p;
 
 	enum class axis {
 		none,
@@ -77,7 +78,8 @@ public:
 	{
 		buttons_1p = 0;
 		buttons_2p = 0;
-		direction_keys.clear();
+		direction_keys_1p.clear();
+		direction_keys_2p.clear();
 	}
 
 	// buttons accessors

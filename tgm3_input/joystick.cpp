@@ -238,7 +238,6 @@ void joystick::update(const tagRAWINPUT *input)
 		return;
 
 	auto *buttons = device->player == 1 ? &buttons_1p : &buttons_2p;
-	auto *old_dir_buttons = device->player == 1 ? &old_dir_buttons_1p : &old_dir_buttons_2p;
 
 	// Completely reset buttons
 	*buttons = 0;
@@ -312,6 +311,9 @@ void joystick::update(const tagRAWINPUT *input)
 		}
 	}
 
+	auto *old_dir_buttons = device->player == 1 ? &old_dir_buttons_1p : &old_dir_buttons_2p;
+	auto *direction_keys =  device->player == 1 ? &direction_keys_1p  : &direction_keys_2p;
+
 	const auto dir_buttons = *buttons & (mask_up | mask_down | mask_left | mask_right);
 	*buttons &= ~dir_buttons;
 
@@ -322,13 +324,13 @@ void joystick::update(const tagRAWINPUT *input)
 	for (auto i = 0; i < std::numeric_limits<decltype(dir_buttons)>::digits; i++) {
 		const auto mask = 1 << i;
 		if (pressed & mask)
-			direction_keys.push_front(mask);
+			direction_keys->push_front(mask);
 		else if (released & mask)
-			direction_keys.remove(mask);
+			direction_keys->remove(mask);
 	}
 
-	if (direction_keys.size() != 0)
-		*buttons |= direction_keys.front();
+	if (direction_keys->size() != 0)
+		*buttons |= direction_keys->front();
 
 	*old_dir_buttons = dir_buttons;
 
