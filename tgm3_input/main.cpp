@@ -152,7 +152,7 @@ position_window_t orig_position_window;
  * Use EnumDisplayMonitors to get a rect for each monitor and sort by X offset,
  * then move the window to the monitor index specified in the config
  **/
-void hook_position_window(const int fullscreen)
+void hook_position_window(const char fullscreen)
 {
 	std::vector<monitor_info> monitors;
 	EnumDisplayMonitors(nullptr, nullptr, monitor_enum, (LPARAM)(&monitors));

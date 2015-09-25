@@ -282,12 +282,16 @@ void joystick::update(const tagRAWINPUT *input)
 			continue;
 
 		if (val_cap.Range.UsageMin == 0x39) { // Hat switch
-			const unsigned short hat_map[] = {
-				0, mask_up, 0, mask_right, 0,
-				mask_down, 0, mask_left, 0,
-			};
-			if (value <= 8)
-				*buttons |= hat_map[value];
+			value -= val_cap.LogicalMin;
+
+			if (value == 0)
+				*buttons |= mask_up;
+			else if (value == 2)
+				*buttons |= mask_right;
+			else if (value == 4)
+				*buttons |= mask_down;
+			else if (value == 6)
+				*buttons |= mask_left;
 		} else {
 			// Cast to signed and rescale to [-1.0, 1.0]
 			auto position = (float)((signed)(value));
