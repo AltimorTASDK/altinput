@@ -177,6 +177,8 @@ void hook_position_window(const int fullscreen)
 		res_x, res_y,
 		TRUE);
 
+	ShowCursor(!fullscreen);
+
 	if (!fullscreen)
 		return;
 
