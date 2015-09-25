@@ -40,6 +40,9 @@ static void apply_patches(const HANDLE process)
 	const auto resolution_x = cfg.value_int(640, "patches.resolution_x");
 	const auto resolution_y = cfg.value_int(480, "patches.resolution_y");
 
+	const auto fullscreen = (char)(cfg.value_bool(true, "patches.fullscreen"));
+	patch_extern(0x4DCC9, &fullscreen, sizeof(fullscreen));
+
 	patch_extern(0x40D160, &resolution_y, sizeof(resolution_y));
 	patch_extern(0x40D165, &resolution_x, sizeof(resolution_x));
 

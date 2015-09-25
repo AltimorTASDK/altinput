@@ -132,9 +132,14 @@ void hook_set_sprite_scale(char *sprite, const float scale)
 	*(float*)(sprite + 0x22C) = scale * .5F * ((float)(res_y) / 480.F);
 }
 
+struct monitor_info {
+	RECT r;
+	HMONITOR handle;
+};
+
 BOOL CALLBACK monitor_enum(HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM param)
 {
-	((std::vector<RECT>*)(param))->push_back(*rect);
+	((std::vector<monitor_info>*)(param))->push_back({ *rect, monitor });
 	return TRUE;
 }
 
@@ -149,22 +154,49 @@ position_window_t orig_position_window;
  **/
 void hook_position_window(const int fullscreen)
 {
-	orig_position_window(cfg.value_bool(true, "patches.fullscreen"));
+	std::vector<monitor_info> monitors;
+	EnumDisplayMonitors(nullptr, nullptr, monitor_enum, (LPARAM)(&monitors));
 
-	std::vector<RECT> rects;
-	EnumDisplayMonitors(nullptr, nullptr, monitor_enum, (LPARAM)(&rects));
-
-	std::sort(rects.begin(), rects.end(), [](const RECT &r1, const RECT &r2)
+	std::sort(monitors.begin(), monitors.end(),
+		[](const monitor_info &m1, const monitor_info &m2)
 	{
-		return r1.left < r2.left;
+		return m1.r.left < m2.r.left;
 	});
 
-	const auto idx = cfg.value_int(0, "patches.monitor");
-	if (idx >= rects.size())
-		return;
+	auto idx = cfg.value_int(0, "patches.monitor");
+	if (idx >= monitors.size())
+		idx = 0;
+
+	const auto res_x = cfg.value_int(640, "patches.resolution_x");
+	const auto res_y = cfg.value_int(480, "patches.resolution_y");
 
 	const auto window = *(HWND*)(0x6415D4);
-	MoveWindow(window, rects[idx].left, rects[idx].top, 640, 480, FALSE);
+	MoveWindow(
+		window,
+		monitors[idx].r.left, monitors[idx].r.top,
+		res_x, res_y,
+		TRUE);
+
+	if (!fullscreen)
+		return;
+
+	const auto style = GetWindowLong(window, GWL_STYLE);
+	SetWindowLong(window, GWL_STYLE, style & ~(WS_SYSMENU | WS_CAPTION) | WS_POPUP);
+
+	MONITORINFOEX info;
+	info.cbSize = sizeof(info);
+	GetMonitorInfo(monitors[idx].handle, &info);
+
+	DEVMODE dev_mode;
+	dev_mode.dmSize = sizeof(dev_mode);
+	if (!EnumDisplaySettings(info.szDevice, ENUM_CURRENT_SETTINGS, &dev_mode))
+		return;
+
+	dev_mode.dmPelsWidth = res_x;
+	dev_mode.dmPelsHeight = res_y;
+	dev_mode.dmDisplayFrequency = 60;
+	dev_mode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+	ChangeDisplaySettingsEx(info.szDevice, &dev_mode, nullptr, CDS_FULLSCREEN, nullptr);
 }
 
 
