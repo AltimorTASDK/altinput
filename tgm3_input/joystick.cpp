@@ -104,8 +104,10 @@ void joystick::get_device_info(
 
 	// Get device capabilities
 	HIDP_CAPS caps;
-	if (!NT_SUCCESS(HidP_GetCaps(dev_info, &caps)))
+	if (!NT_SUCCESS(HidP_GetCaps(dev_info, &caps))) {
+		HidD_FreePreparsedData(dev_info);
 		return;
+	}
 
 	// Get button capabilities
 	auto num_button_caps = caps.NumberInputButtonCaps;
@@ -117,8 +119,10 @@ void joystick::get_device_info(
 		button_caps.get(),
 		&num_button_caps,
 		dev_info))
-	)
+	) {
+		HidD_FreePreparsedData(dev_info);
 		return;
+	}
 
 	// Get value capabilities
 	new_device->num_value_caps = caps.NumberInputValueCaps;
@@ -130,8 +134,10 @@ void joystick::get_device_info(
 		new_device->value_caps.get(),
 		&new_device->num_value_caps,
 		dev_info))
-	)
+	) {
+		HidD_FreePreparsedData(dev_info);
 		return;
+	}
 
 	new_device->nt_handle = nt_handle;
 	new_device->ri_handle = ri_handle;;
