@@ -93,7 +93,7 @@ void joystick::get_device_info(
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 	prefix << "joystick." << converter.to_bytes(name);
 	if (duplicate_num > 0)
-		prefix << " " + (duplicate_num + 1);
+		prefix << " " << (duplicate_num + 1);
 
 	new_device->player = cfg.value_int(0, prefix.str() + ".player");
 
