@@ -169,8 +169,24 @@ void hook_position_window(const char fullscreen)
 
 	const auto res_x = cfg.value_int(640, "patches.resolution_x");
 	const auto res_y = cfg.value_int(480, "patches.resolution_y");
+	auto *already_fullscreen = (int*)(0x486A68);
+
+	if (!fullscreen && *already_fullscreen != 1)
+		return;
+
+	*already_fullscreen = fullscreen;
 
 	const auto window = *(HWND*)(0x6415D4);
+
+	const auto style = GetWindowLong(window, GWL_STYLE);
+	static long orig_style = 0;
+	if (fullscreen) {
+		orig_style = style;
+		SetWindowLong(window, GWL_STYLE, style & ~(WS_SYSMENU | WS_CAPTION | WS_THICKFRAME) | WS_POPUP);
+	} else {
+		SetWindowLong(window, GWL_STYLE, orig_style);
+	}
+
 	MoveWindow(
 		window,
 		monitors[idx].r.left, monitors[idx].r.top,
@@ -178,21 +194,6 @@ void hook_position_window(const char fullscreen)
 		TRUE);
 
 	ShowCursor(!fullscreen);
-
-	auto *already_fullscreen = (int*)(0x486A68);
-	if (!fullscreen && *already_fullscreen != 1)
-		return;
-
-	*already_fullscreen = fullscreen;
-
-	const auto style = GetWindowLong(window, GWL_STYLE);
-	static long orig_style = 0;
-	if (fullscreen) {
-		orig_style = style;
-		SetWindowLong(window, GWL_STYLE, style & ~(WS_SYSMENU | WS_CAPTION) | WS_POPUP);
-	} else {
-		SetWindowLong(window, GWL_STYLE, orig_style);
-	}
 
 	if (!fullscreen)
 		return;
