@@ -179,11 +179,23 @@ void hook_position_window(const char fullscreen)
 
 	ShowCursor(!fullscreen);
 
-	if (!fullscreen)
+	auto *already_fullscreen = (int*)(0x486A68);
+	if (!fullscreen && *already_fullscreen != 1)
 		return;
 
+	*already_fullscreen = fullscreen;
+
 	const auto style = GetWindowLong(window, GWL_STYLE);
-	SetWindowLong(window, GWL_STYLE, style & ~(WS_SYSMENU | WS_CAPTION) | WS_POPUP);
+	static long orig_style = 0;
+	if (fullscreen) {
+		orig_style = style;
+		SetWindowLong(window, GWL_STYLE, style & ~(WS_SYSMENU | WS_CAPTION) | WS_POPUP);
+	} else {
+		SetWindowLong(window, GWL_STYLE, orig_style);
+	}
+
+	if (!fullscreen)
+		return;
 
 	MONITORINFOEX info;
 	info.cbSize = sizeof(info);
