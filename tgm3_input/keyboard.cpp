@@ -56,6 +56,7 @@ void keyboard::update(const tagRAWINPUT *input)
 	const auto down = (input->data.keyboard.Flags & RI_KEY_BREAK) == 0;
 	const auto mask = key_mask_map[vkey];
 
+	buttons |= old_dir_buttons;
 	buttons = down ? (buttons | mask) : (buttons & ~mask);
 
 	const auto dir_buttons = buttons & (mask_up | mask_down | mask_left | mask_right);
